@@ -1,0 +1,19 @@
+{
+  "name": "panopsis",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "@types/html-minifier-terser": "^7.0.2",
+    "@types/node": "^22.15.16",
+    "html-minifier-terser": "^7.2.0",
+    "sharp": "^0.34.1"
+  }
+}
