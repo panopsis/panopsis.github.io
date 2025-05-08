@@ -5,7 +5,7 @@ import { minify } from 'html-minifier-terser';
 
 type PathConfig = {
     src: string;
-    public: string;
+    output: string;
 };
 
 type AssetPaths = {
@@ -44,21 +44,21 @@ class WebsiteBuilder {
     constructor() {
         this.paths = {
             src: path.join(__dirname, 'src'),
-            public: path.join(__dirname, 'public')
+            output: __dirname // Output directly to repository root
         };
 
         this.assets = {
             background: {
                 src: path.join(this.paths.src, 'background.png'),
-                dest: path.join(this.paths.public, 'background.webp')
+                dest: path.join(this.paths.output, 'background.webp')
             },
             logo: {
                 src: path.join(this.paths.src, 'logo.png'),
-                dest: path.join(this.paths.public, 'logo.svg')
+                dest: path.join(this.paths.output, 'logo.svg')
             },
             html: {
                 src: path.join(this.paths.src, 'index.html'),
-                dest: path.join(this.paths.public, 'index.html')
+                dest: path.join(this.paths.output, 'index.html')
             },
             css: { src: path.join(this.paths.src, 'styles.css') },
             js: { src: path.join(this.paths.src, 'scripts.js') }
@@ -89,7 +89,7 @@ class WebsiteBuilder {
 
     async build(): Promise<void> {
         try {
-            await fs.mkdir(this.paths.public, { recursive: true });
+            // No need to create output directory as we're using the root
 
             await Promise.all([
                 this.optimizeBackground(),
@@ -158,13 +158,13 @@ class WebsiteBuilder {
 
             await sharp(this.assets.logo.src)
                 .resize(32, 32)
-                .toFile(path.join(this.paths.public, 'favicon.ico'));
+                .toFile(path.join(this.paths.output, 'favicon.ico'));
             console.log('Generated favicon.ico');
 
             await sharp(this.assets.logo.src)
                 .resize(this.faviconConfig.appleIconSize, this.faviconConfig.appleIconSize)
                 .png()
-                .toFile(path.join(this.paths.public, 'apple-touch-icon.png'));
+                .toFile(path.join(this.paths.output, 'apple-touch-icon.png'));
             console.log('Generated apple-touch-icon.png');
 
             await this.generateWebManifest();
@@ -178,7 +178,7 @@ class WebsiteBuilder {
         await sharp(this.assets.logo.src)
             .resize(size, size)
             .png()
-            .toFile(path.join(this.paths.public, `favicon-${size}x${size}.png`));
+            .toFile(path.join(this.paths.output, `favicon-${size}x${size}.png`));
 
         console.log(`Generated favicon-${size}x${size}.png`);
     }
@@ -198,7 +198,7 @@ class WebsiteBuilder {
         };
 
         await fs.writeFile(
-            path.join(this.paths.public, 'site.webmanifest'),
+            path.join(this.paths.output, 'site.webmanifest'),
             JSON.stringify(manifest, null, 2)
         );
 
