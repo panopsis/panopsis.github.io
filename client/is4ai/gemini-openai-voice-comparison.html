@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice API Comparison: OpenAI vs. Google Gemini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Visualization & Content Choices: 
+        - Pricing (Table 1): Interactive HTML table + Bar charts (Chart.js). Goal: Compare costs. Interaction: Sort/filter table, hover charts. Justification: Detail + visual summary.
+        - Latency (Table 2): Bar charts (Chart.js). Goal: Compare latencies. Interaction: Hover. Justification: Effective for performance metrics.
+        - STT Accuracy (Table 3): Bar chart (Chart.js). Goal: Compare WER. Interaction: Hover. Justification: Good for performance.
+        - Qualitative Features (Tables 4, 5, text): HTML tables, text blocks, expandable sections. Goal: Explain features. Interaction: Read, expand. Justification: Clarity for conceptual info.
+        - HIPAA/Suitability: Bullet points, callouts. Goal: Inform compliance/use cases. Interaction: Read. Justification: Clear for critical info.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        .active-nav {
+            background-color: #0D9488;
+            color: white;
+        }
+
+        .nav-item {
+            cursor: pointer;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.3s ease;
+        }
+
+        .nav-item:hover {
+            background-color: #14B8A6;
+            color: white;
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: #0F766E;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #115E59;
+        }
+
+        h4 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-top: 1rem;
+            margin-bottom: 0.5rem;
+            color: #134E4A;
+        }
+
+        p,
+        li {
+            line-height: 1.6;
+            margin-bottom: 0.75rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 1.5rem;
+        }
+
+        th,
+        td {
+            border: 1px solid #D1D5DB;
+            padding: 0.75rem;
+            text-align: left;
+            font-size: 0.875rem;
+        }
+
+        th {
+            background-color: #F3F4F6;
+            font-weight: 600;
+        }
+
+        .tag {
+            display: inline-block;
+            background-color: #CCFBF1;
+            color: #134E4A;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 500;
+            margin-right: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            white-space: pre-wrap;
+            z-index: 10;
+        }
+    </style>
+</head>
+
+<body class="bg-stone-100 text-stone-800">
+
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col sm:flex-row items-center justify-between py-4">
+                <h1 class="text-2xl sm:text-3xl font-bold text-teal-700 mb-2 sm:mb-0">Voice API Showdown: OpenAI vs.
+                    Gemini</h1>
+                <nav id="mainNav" class="flex flex-wrap justify-center sm:justify-end space-x-1 sm:space-x-2">
+                    <button class="nav-item active-nav" data-target="home">Home</button>
+                    <button class="nav-item" data-target="openai">OpenAI</button>
+                    <button class="nav-item" data-target="google">Google Gemini</button>
+                    <button class="nav-item" data-target="compare">Compare</button>
+                    <button class="nav-item" data-target="suitability">Suitability</button>
+                    <button class="nav-item" data-target="recommendations">Recommendations</button>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+
+        <section id="home" class="content-section active card">
+            <h2>Welcome to the Interactive Voice API Comparison</h2>
+            <p>This interactive application provides a comprehensive analysis of OpenAI's and Google Gemini's speech and
+                voice APIs, based on the detailed research report. Its purpose is to help you understand their
+                capabilities, performance, pricing, and suitability for various voice-enabled applications, particularly
+                for a medical booking agent and beyond.</p>
+            <p>Navigate through the sections using the menu above to explore deep dives into each platform, quantitative
+                comparisons of key metrics like price and latency, qualitative feature analyses, and strategic
+                recommendations. The goal is to make the report's rich information easily consumable and explorable.</p>
+            <h3>How to Use This SPA:</h3>
+            <ul>
+                <li><strong>Navigation:</strong> Click on the tabs in the header (Home, OpenAI, Google Gemini, etc.) to
+                    switch between different sections of the report.</li>
+                <li><strong>Interactive Charts:</strong> In the "Compare" section, you'll find charts visualizing
+                    pricing, latency, and accuracy data. Hover over chart elements to see detailed tooltips.</li>
+                <li><strong>Data Tables:</strong> Detailed information from the report's tables is presented in HTML
+                    tables, which you can scroll through.</li>
+                <li><strong>Content Exploration:</strong> Read through the textual summaries and analyses drawn directly
+                    from the source report. Key terms and concepts are highlighted.</li>
+            </ul>
+            <p>This application is designed to help you synthesize the report's key findings and make informed decisions
+                about leveraging these advanced voice AI technologies.</p>
+        </section>
+
+        <section id="openai" class="content-section card">
+            <h2>OpenAI Speech & Voice API Suite</h2>
+            <p>This section provides a deep dive into OpenAI's audio capabilities, including its Speech-to-Text (STT),
+                Text-to-Speech (TTS), and Realtime API offerings. OpenAI has significantly advanced its audio
+                processing, largely powered by its GPT-4o architecture, aiming for more accurate, natural, and
+                context-aware voice interactions.</p>
+
+            <h3>3.1. Overview of OpenAI's Audio Capabilities</h3>
+            <p>OpenAI's evolution in audio is marked by the GPT-4o architecture, underpinning newer models for STT, TTS,
+                and realtime voice-to-voice. Services are available via their API platform and Azure OpenAI Service.</p>
+
+            <h3>3.2. Speech-to-Text (STT) Services</h3>
+            <h4>3.2.1. Legacy Whisper API</h4>
+            <p>The Whisper API remains a well-regarded option for high-quality transcription. Priced at $0.006 per
+                minute, it offers predictable budgeting. While capable, focus has shifted to newer GPT-4o based STT
+                models.</p>
+
+            <h4>3.2.2. Next-Generation STT: `gpt-4o-transcribe` and `gpt-4o-mini-transcribe`</h4>
+            <p>Built on GPT-4o and GPT-4o-mini, these models use specialized audio pretraining and RL-heavy paradigms
+                for improved Word Error Rate (WER), language recognition, and accuracy, especially in challenging
+                conditions (accents, noise, varied speeds). `gpt-4o-transcribe` is positioned as state-of-the-art
+                (claimed 2.46% WER on FLEURS English). `gpt-4o-mini-transcribe` offers a cost-effective balance
+                (reported ~3.5% WER). API has a 25MB file limit, with guidance for longer audio. Streaming is supported.
+            </p>
+
+            <h3>3.3. Text-to-Speech (TTS) Services</h3>
+            <h4>3.3.1. `gpt-4o-mini-tts` Model</h4>
+            <p>Leveraging GPT-4o-mini, this model's key feature is "steerability." Developers can use natural language
+                prompts to guide accent, emotion, intonation, style, speed, and tone. It uses preset artificial voices
+                and supports over 50 languages.</p>
+
+            <h3>3.4. Realtime API for Speech-to-Speech Interactions</h3>
+            <p>Engineered for low-latency, interactive speech-to-speech, this API supports live microphone streaming,
+                instant transcripts, and playback of synthesized speech. It likely uses optimized GPT-4o variants and
+                supports a 128k token context window, with strategies for managing longer conversations.</p>
+
+            <h3>3.5. Developer Integration & Ecosystem</h3>
+            <p>OpenAI provides an Agents SDK. Azure OpenAI Service offers enterprise-grade access.</p>
+
+            <h3>3.6. Implications of OpenAI's Approach</h3>
+            <p>OpenAI's strategy points to integrated, intelligent voice experiences. Embedding voice in GPT-4o allows
+                leveraging its reasoning and knowledge. Token-based pricing for new audio models (vs. per-minute for
+                Whisper) reflects complexity but lacks clear audio-to-token conversion guidelines, impacting cost
+                predictability. "Steerability" in TTS is transformative, offering vast expressive control crucial for
+                applications like medical booking agents needing nuanced communication.</p>
+        </section>
+
+        <section id="google" class="content-section card">
+            <h2>Google Gemini Voice & Audio API Suite</h2>
+            <p>This section details Google's voice AI strategy, centered on the natively multimodal Gemini models and
+                complemented by specialized Google Cloud AI services. Access is via the Gemini API (through Google AI
+                Studio or Vertex AI) and Firebase AI Logic for client-side integration.</p>
+
+            <h3>4.1. Overview of Google's Voice AI Strategy</h3>
+            <p>Gemini models are designed to process text, audio, images, and video integrally. This is complemented by
+                mature Cloud Speech-to-Text and Cloud Text-to-Speech services.</p>
+
+            <h3>4.2. Gemini API for Audio Input (STT Capabilities)</h3>
+            <p>Gemini models (e.g., 2.5 Flash, 2.0 Flash) natively accept audio in prompts, making STT an inherent
+                function. Benchmarks show competitive WERs (around 15.7-15.8%), with strengths in accented speech and
+                technical vocabulary. Timestamp accuracy could be a challenge.</p>
+
+            <h3>4.3. Gemini API for Text-to-Speech (TTS)</h3>
+            <p>Supported by `gemini-2.5-pro-preview-tts` and `gemini-2.5-flash-preview-tts` (Preview stage). Offers
+                "controllable" speech style, accent, pace, and tone via prompts. Supports single and multi-speaker (up
+                to 2 voices) output. Provides 30 prebuilt voice options. Supports 24+ languages with auto-detection.
+                Streaming output is available.</p>
+
+            <h3>4.4. Gemini Live API (Native Audio Dialog, Voice-to-Voice)</h3>
+            <p>Designed for low-latency, bidirectional voice (and potential video) interactions, mimicking human
+                conversation with interruption support. Uses a persistent WebSocket connection. Gemini 2.5 introduced
+                "native audio generation" for more natural voices, "affective dialog" (responding to emotion), and
+                "proactive audio" (differentiating primary speaker from background). Firebase AI Logic SDKs facilitate
+                client-side integration.</p>
+
+            <h3>4.5. Leveraging Google Cloud Speech-to-Text & Text-to-Speech Services</h3>
+            <p>Google Cloud STT offers specialized models like `chirp`, `phone_call`, `video`, and crucially,
+                `medical_conversation` and `medical_dictation`. Supports 125+ languages and model adaptation. Google
+                Cloud TTS provides a vast selection of voices (Standard, WaveNet, Neural2, Chirp 3:HD, Studio) and
+                customization (Custom Voice, Instant Custom Voice). This dual offering (Gemini native vs. specialized
+                Cloud services) provides flexibility based on project needs.</p>
+
+            <h3>4.6. Implications of Google's Approach</h3>
+            <p>Google's commitment to native multimodality in Gemini allows for holistic understanding. The dual
+                strategy (Gemini API vs. Cloud STT/TTS) caters to diverse needs, from integrated AI to specialized
+                components. The Gemini Live API's advanced features (native audio output, affective dialog, proactive
+                audio) signal a push for human-like real-time conversations, crucial for user adoption in applications
+                like medical booking.</p>
+        </section>
+
+        <section id="compare" class="content-section">
+            <h2>Quantitative & Qualitative Comparison</h2>
+            <p>This section directly compares OpenAI and Google Gemini across key quantitative metrics like pricing,
+                latency, and STT accuracy, as well as qualitative features such as voice quality, steerability, and
+                customization options. Interactive charts and tables are used to visualize this data.</p>
+
+            <div class="card">
+                <h3>5.1. Pricing Structures & Table 1: Comparative Pricing Summary</h3>
+                <p>Understanding pricing is critical. OpenAI uses token-based pricing for new audio models (with some
+                    ambiguity in audio-to-token conversion) and per-minute for legacy Whisper. Google uses token-based
+                    for Gemini API audio (with a fixed 32 tokens/second for STT input) and per-minute/per-character for
+                    Cloud STT/TTS.</p>
+                <div class="overflow-x-auto">
+                    <table id="pricingTable">
+                        <thead>
+                            <tr>
+                                <th>Service Category</th>
+                                <th>Provider / API</th>
+                                <th>Model(s)</th>
+                                <th>Unit (Input/Output)</th>
+                                <th>Price (Input)</th>
+                                <th>Price (Output)</th>
+                                <th>Free Tier Details</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <div class="chart-container mt-6">
+                    <canvas id="sttPricingChart"></canvas>
+                </div>
+                <p class="text-center text-sm text-stone-600 mt-2">STT Pricing Comparison (Selected Models)</p>
+                <div class="chart-container mt-6">
+                    <canvas id="ttsPricingChart"></canvas>
+                </div>
+                <p class="text-center text-sm text-stone-600 mt-2">TTS Pricing Comparison (Selected Models)</p>
+            </div>
+
+            <div class="card">
+                <h3>5.2. Latency & Throughput & Table 2: Latency Comparison</h3>
+                <p>Latency is crucial for real-time voice interactions. Both platforms claim "low-latency" for their
+                    live APIs, but reported figures and user experiences vary. Achieving sub-500ms for fluid
+                    conversation is challenging.</p>
+                <div class="chart-container">
+                    <canvas id="latencyChart"></canvas>
+                </div>
+                <p class="text-center text-sm text-stone-600 mt-2">Latency Comparison (Selected Metrics)</p>
+                <p class="mt-4"><strong>Key Latency Points:</strong></p>
+                <ul>
+                    <li>OpenAI Realtime API: End-to-end speech-to-speech ~1.7s (WebRTC analysis, Jan 2025). Text-only
+                        response 350-800ms. Can be higher with features like noise reduction.</li>
+                    <li>Google Gemini Live API: "Low-latency" claimed. Text-based TTFT for Gemini 2.5 Pro ~0.7s (voice
+                        adds STT/TTS overhead).</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>6.2. STT Accuracy & Table 3: STT Accuracy Benchmark Summary</h3>
+                <p>Word Error Rate (WER) is a key STT metric. Vendor claims are often optimistic; independent benchmarks
+                    and specific dataset performance provide a fuller picture. "Accuracy" is context-dependent (e.g.,
+                    general vs. accented vs. specialist speech).</p>
+                <div class="chart-container">
+                    <canvas id="sttAccuracyChart"></canvas>
+                </div>
+                <p class="text-center text-sm text-stone-600 mt-2">STT Word Error Rate (WER) Comparison (Selected
+                    Benchmarks)</p>
+                <p class="mt-4"><strong>Key Accuracy Observations:</strong></p>
+                <ul>
+                    <li>OpenAI `gpt-4o-transcribe`: Claimed 2.46% WER (FLEURS English), 11.9% (VoiceWriter.io Overall -
+                        top performer). Performance can vary by dataset (e.g., poorer on AMI).</li>
+                    <li>Gemini 1.5 Pro: 15.7% WER (VoiceWriter.io Overall). Strong on accented and specialist speech
+                        (ranked 1st in these categories).</li>
+                    <li>Google Cloud STT (Chirp): 5-10% WER (Softcery). Medical models are specialized but specific WERs
+                        not widely benchmarked in provided report.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Qualitative Features Overview</h3>
+                <h4>6.1. Voice Quality & Naturalness (TTS)</h4>
+                <p><strong>OpenAI `gpt-4o-mini-tts`:</strong> Natural, human-like, highly steerable via prompting. Uses
+                    preset artificial voices.</p>
+                <p><strong>Google Gemini & Cloud TTS:</strong> Gemini API TTS offers controllable style, 30 prebuilt
+                    voices. Gemini Live API (2.5) aims for more natural native audio. Cloud TTS has a wide range of
+                    high-quality voices (WaveNet, Neural2, Chirp 3:HD).</p>
+
+                <h4>6.3. Steerability & Control (TTS)</h4>
+                <p>Both OpenAI (`gpt-4o-mini-tts`) and Google (Gemini API TTS) offer strong prompt-based control over
+                    style, emotion, accent, pace. This is a significant evolution from traditional SSML-based control,
+                    leveraging LLM understanding for nuanced delivery.</p>
+
+                <h4>6.4. Language & Accent Support (Table 4)</h4>
+                <div class="overflow-x-auto">
+                    <table id="languageSupportTable">
+                        <thead>
+                            <tr>
+                                <th>Service Category</th>
+                                <th>Provider / API</th>
+                                <th>Languages Supported</th>
+                                <th>Accent Control (TTS)</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+
+                <h4>6.5. Developer Experience</h4>
+                <p><strong>OpenAI:</strong> OpenAI API platform, Agents SDK, Azure OpenAI Service. Documentation and
+                    community forums.</p>
+                <p><strong>Google:</strong> Gemini API (via AI Studio, Vertex AI), Firebase AI Logic (client SDKs).
+                    Google Cloud Platform has extensive docs, client libraries. Some feedback notes Gemini support as
+                    potentially less responsive than OpenAI's.</p>
+            </div>
+
+            <div class="card">
+                <h3>8. Advanced Customization & Table 5: Customization Feature Availability</h3>
+                <p>True user-driven voice cloning or deep acoustic model fine-tuning via general APIs is still limited.
+                    Stylistic TTS control via prompting is strong on both platforms.</p>
+                <div class="overflow-x-auto">
+                    <table id="customizationTable">
+                        <thead>
+                            <tr>
+                                <th>Service Category</th>
+                                <th>Provider / API</th>
+                                <th>Feature Type</th>
+                                <th>Availability</th>
+                                <th>Notes/Relevant Models</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+                <p class="mt-4"><strong>Key Customization Points:</strong></p>
+                <ul>
+                    <li><strong>OpenAI:</strong> Strong prompt-based TTS style control. Custom voice training is a
+                        future plan for `gpt-4o-mini-tts`. STT/TTS audio model fine-tuning not an explicit API feature.
+                        LLM (text) fine-tuning is available.</li>
+                    <li><strong>Google:</strong> Cloud TTS offers "Custom Voice" (studio audio, sales engagement) and
+                        "Instant Custom Voice". Cloud STT has "Model Adaptation" (phrase sets, custom classes). Gemini
+                        API TTS has prompt-based style control. Gemini text model fine-tuning is available.</li>
+                </ul>
+            </div>
+        </section>
+
+        <section id="suitability" class="content-section card">
+            <h2>Application-Specific Suitability</h2>
+            <p>This section evaluates the suitability of these API suites for the medical booking agent project and for
+                broader, more diverse future applications, considering factors like compliance, accuracy with
+                specialized language, and versatility.</p>
+
+            <h3>7.1. Medical Booking Agent</h3>
+            <p>Critical factors: HIPAA compliance, accuracy with medical terms/accents, natural/empathetic conversation.
+            </p>
+            <h4>HIPAA Compliance and BAAs:</h4>
+            <ul>
+                <li><strong>OpenAI:</strong> Offers BAA for zero data retention API endpoints. SOC 2 Type 2 compliant.
+                </li>
+                <li><strong>Google:</strong> Google Cloud BAA covers Generative AI on Vertex AI (Gemini), Cloud STT,
+                    Cloud TTS. HIPAA compliance is a shared responsibility.</li>
+            </ul>
+            <h4>Accuracy with Medical Terminology:</h4>
+            <ul>
+                <li><strong>OpenAI:</strong> `gpt-4o-transcribe` has high general accuracy, good with accents/noise. No
+                    dedicated medical STT model.</li>
+                <li><strong>Google:</strong> Cloud STT has `medical_conversation` and `medical_dictation` models. Gemini
+                    STT strong on "specialist speech."</li>
+            </ul>
+            <h4>Suitability for IVR and Agent Assistance:</h4>
+            <ul>
+                <li>Both platforms' Realtime/Live APIs are designed for this.</li>
+                <li>Google Gemini Live API's "affective dialog" and "proactive audio" could enhance user experience.
+                </li>
+                <li>OpenAI's steerable `gpt-4o-mini-tts` can convey empathy.</li>
+            </ul>
+            <p><strong>Implications:</strong> Google Cloud's dedicated medical STT models and explicit BAA coverage for
+                relevant services offer a strong starting point. However, OpenAI's general STT accuracy and TTS
+                steerability are compelling. The core LLM's intelligence is paramount for conversational logic.</p>
+
+            <h3>7.2. Broader Use-Case Versatility</h3>
+            <ul>
+                <li><strong>OpenAI:</strong> GPT-4o's general capabilities and steerable TTS support diverse
+                    applications (customer service, creative content, accessibility).</li>
+                <li><strong>Google Gemini & Cloud:</strong> Gemini's native multimodality is key for projects
+                    integrating voice with image/video. Extensive language support and specialized Cloud models (phone,
+                    video STT) enhance versatility.</li>
+            </ul>
+            <p>The choice depends on future project specifics: multimodality (favors Gemini), cutting-edge LLM
+                reasoning/custom voice personas (favors OpenAI).</p>
+        </section>
+
+        <section id="recommendations" class="content-section card">
+            <h2>Strategic Recommendations & Conclusion</h2>
+            <p>The choice between OpenAI and Google Gemini voice APIs depends on specific project needs. Both platforms
+                offer rapidly advancing tools for sophisticated voice applications.</p>
+
+            <h3>9.1. Strengths and Weaknesses Summary</h3>
+            <h4>OpenAI:</h4>
+            <p><span class="tag">Strengths:</span> STT Accuracy (`gpt-4o-transcribe`), TTS Steerability, Integrated LLM
+                Power (GPT-4o), Rapid Innovation.</p>
+            <p><span class="tag">Weaknesses:</span> Pricing Ambiguity (audio-to-token), Limited Custom Voice API,
+                Latency Variability, No Dedicated Medical STT.</p>
+            <h4>Google Gemini & Cloud:</h4>
+            <p><span class="tag">Strengths:</span> Native Multimodality (Gemini), Specialized STT (Cloud medical
+                models), STT Niche Accuracy (Gemini for accents/specialist terms), Mature Cloud Services, Predictable
+                STT Tokenization (Gemini), Advanced Live Interaction (Gemini Live API), Comprehensive BAA.</p>
+            <p><span class="tag">Weaknesses:</span> Overall STT WER (Gemini slightly higher in some general tests),
+                Potential STT Timestamp Issues, Complexity of Dual Offerings (Gemini vs. Cloud), Gemini TTS Voice
+                Fine-tuning less mature than Cloud Custom Voice.</p>
+
+            <h3>9.2. Recommendation for Medical Booking Agent</h3>
+            <p><strong>Leaning towards Google's suite:</strong> Leveraging Google Cloud STT's `medical_conversation`
+                model (for transcription accuracy with medical terms and BAA coverage) combined with Gemini for core
+                conversational logic and Gemini API TTS or Cloud TTS for output.</p>
+            <p><strong>Caveat:</strong> A Proof of Concept (PoC) is essential to compare Google's medical STT, Gemini
+                STT, and OpenAI's `gpt-4o-transcribe` on representative medical audio. If OpenAI shows superior accuracy
+                and BAA terms are met, it's a strong alternative.</p>
+            <p><strong>Actionable PoC Steps:</strong> 1. Transcribe sample medical audio with top STT candidates. 2.
+                Test conversational flow with Realtime/Live APIs. 3. Model costs.</p>
+
+            <h3>9.3. Considerations for Broader Future Applications</h3>
+            <ul>
+                <li>Multimodal: Google Gemini.</li>
+                <li>Cutting-edge General Conversational AI / Creative Voice: OpenAI.</li>
+                <li>Extensive TTS Language/Voice Customization: Google Cloud TTS.</li>
+                <li>Cost-Sensitive High-Volume Simpler STT: Legacy Whisper API or Cloud STT standard models.</li>
+            </ul>
+
+            <h3>9.4. Guidance on Balancing Cost, Performance, and Features</h3>
+            <ol>
+                <li>Define clear requirements per project.</li>
+                <li>Prioritize "must-have" vs. "nice-to-have" features.</li>
+                <li>Start with free tiers & PoCs for empirical assessment.</li>
+                <li>Monitor API evolution in this rapidly changing field.</li>
+            </ol>
+
+            <h3>10. Conclusion from the Report</h3>
+            <p>Both OpenAI and Google offer compelling, rapidly advancing voice API suites. OpenAI excels in STT
+                accuracy (newer models) and TTS steerability, built on GPT-4o. Google's Gemini platform stands out for
+                native multimodality, specialized STT (including medical), and advanced live interaction features,
+                complemented by mature Cloud services. For the medical booking agent, Google's specialized medical STT
+                and clear BAA offer a strong start, pending PoC validation against OpenAI's offerings. Continuous
+                evaluation is key in this dynamic field.</p>
+        </section>
+    </main>
+
+    <footer class="text-center p-4 text-sm text-stone-600 border-t border-stone-300 mt-8">
+        Interactive SPA based on "A Comparative Analysis of OpenAI and Google Gemini Speech & Voice APIs".
+    </footer>
+
+    <div id="tooltip" class="tooltip"></div>
+
+    <script>
+        const navItems = document.querySelectorAll('#mainNav .nav-item');
+        const contentSections = document.querySelectorAll('.content-section');
+        const tooltipElement = document.getElementById('tooltip');
+
+        navItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const targetId = item.getAttribute('data-target');
+
+                navItems.forEach(nav => nav.classList.remove('active-nav'));
+                item.classList.add('active-nav');
+
+                contentSections.forEach(section => {
+                    if (section.id === targetId) {
+                        section.classList.add('active');
+                    } else {
+                        section.classList.remove('active');
+                    }
+                });
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+
+        function createChartTooltip(chart) {
+            if (chart.tooltip) {
+                chart.tooltip.initialize();
+            }
+        }
+
+        function showTooltip(event, text) {
+            tooltipElement.innerHTML = text;
+            tooltipElement.style.opacity = '1';
+            tooltipElement.style.left = event.pageX + 10 + 'px';
+            tooltipElement.style.top = event.pageY + 10 + 'px';
+        }
+
+        function hideTooltip() {
+            tooltipElement.style.opacity = '0';
+        }
+
+        document.addEventListener('mousemove', (e) => {
+            if (tooltipElement.style.opacity === '1') {
+                tooltipElement.style.left = e.pageX + 10 + 'px';
+                tooltipElement.style.top = e.pageY + 10 + 'px';
+            }
+        });
+
+        // Data from Table 1: Comparative Pricing Summary
+        const pricingData = [
+            { category: "STT", provider: "OpenAI", model: "Whisper (Legacy)", unitInput: "Per minute", priceInput: 0.006, priceOutput: "N/A", freeTier: "API free credits" },
+            { category: "STT", provider: "OpenAI", model: "gpt-4o-transcribe", unitInput: "Per 1M tokens", priceInput: 40.00, priceOutput: 80.00, freeTier: "API free credits" },
+            { category: "STT", provider: "OpenAI", model: "gpt-4o-mini-transcribe", unitInput: "Per 1M tokens", priceInput: 10.00, priceOutput: 20.00, freeTier: "API free credits" },
+            { category: "STT", provider: "Google", model: "Gemini API (2.5 Flash Preview)", unitInput: "Per 1M tokens (Audio)", priceInput: 1.00, priceOutput: "N/A", freeTier: "Gemini API free tier" },
+            { category: "STT", provider: "Google", model: "Gemini API (2.5 Flash Native Audio)", unitInput: "Per 1M tokens (Audio)", priceInput: 3.00, priceOutput: "N/A", freeTier: "Gemini API free tier" },
+            { category: "STT", provider: "Google", model: "Cloud STT (Standard V2)", unitInput: "Per minute", priceInput: 0.016, priceOutput: "N/A", freeTier: "60 mins/month V1; $300 credit" },
+            { category: "STT", provider: "Google", model: "Cloud STT (Medical V2)", unitInput: "Per minute", priceInput: 0.078, priceOutput: "N/A", freeTier: "First 60 mins/month free" },
+            { category: "TTS", provider: "OpenAI", model: "gpt-4o-mini-tts", unitInput: "Per 1M tokens (Text In / Audio Out)", priceInput: 0.60, priceOutput: 20.00, freeTier: "API free credits" },
+            { category: "TTS", provider: "Google", model: "Gemini API (2.5 Flash Preview TTS)", unitInput: "Per 1M tokens (Text In / Audio Out)", priceInput: 0.50, priceOutput: 10.00, freeTier: "Gemini API free tier" },
+            { category: "TTS", provider: "Google", model: "Gemini API (2.5 Pro Preview TTS)", unitInput: "Per 1M tokens (Text In / Audio Out)", priceInput: 1.00, priceOutput: 20.00, freeTier: "Gemini API free tier" },
+            { category: "TTS", provider: "Google", model: "Cloud TTS (Standard)", unitInput: "Per 1M chars (Text)", priceInput: 4.00, priceOutput: "N/A", freeTier: "4M chars/month free" },
+            { category: "TTS", provider: "Google", model: "Cloud TTS (WaveNet/Neural2)", unitInput: "Per 1M chars (Text)", priceInput: 16.00, priceOutput: "N/A", freeTier: "1M chars/month free" },
+            { category: "Realtime/Live", provider: "OpenAI", model: "Realtime API (GPT-4o Audio based)", unitInput: "Per 1M tokens (Audio In/Out)", priceInput: 40.00, priceOutput: 80.00, freeTier: "API free credits" },
+            { category: "Realtime/Live", provider: "Google", model: "Gemini Live API (2.0 Flash)", unitInput: "Per 1M tokens (Audio In/Out)", priceInput: 2.10, priceOutput: 8.50, freeTier: "Gemini API free tier" }
+        ];
+
+        const pricingTableBody = document.getElementById('pricingTable').getElementsByTagName('tbody')[0];
+        pricingData.forEach(item => {
+            let row = pricingTableBody.insertRow();
+            row.insertCell().textContent = item.category;
+            row.insertCell().textContent = item.provider;
+            row.insertCell().textContent = item.model;
+            row.insertCell().textContent = item.unitInput;
+            row.insertCell().textContent = typeof item.priceInput === 'number' ? `$${item.priceInput.toFixed(3)}` : item.priceInput;
+            row.insertCell().textContent = typeof item.priceOutput === 'number' ? `$${item.priceOutput.toFixed(2)}` : item.priceOutput;
+            row.insertCell().textContent = item.freeTier;
+        });
+
+        // STT Pricing Chart
+        const sttPricingChartCtx = document.getElementById('sttPricingChart').getContext('2d');
+        const sttModelsForChart = pricingData.filter(d => d.category === "STT" && typeof d.priceInput === 'number' && (d.unitInput.includes('minute') || d.unitInput.includes('1M tokens')));
+
+        // Normalize STT pricing to 'per minute' for rough comparison where possible, or keep as per 1M tokens
+        // This is a simplified visualization due to differing units (tokens vs minutes)
+        // For this chart, we'll primarily show models with per-minute or per-1M-token pricing directly.
+        // A more complex normalization (e.g. tokens/sec to cost/min) is beyond simple chart display here.
+        new Chart(sttPricingChartCtx, {
+            type: 'bar',
+            data: {
+                labels: sttModelsForChart.map(d => `${d.provider} ${d.model}`),
+                datasets: [{
+                    label: 'Price (Input) - Varies by Unit (USD)',
+                    data: sttModelsForChart.map(d => d.priceInput),
+                    backgroundColor: sttModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgba(20, 184, 166, 0.7)' : 'rgba(96, 165, 250, 0.7)'),
+                    borderColor: sttModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgb(13, 148, 136)' : 'rgb(59, 130, 246)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Price (USD)' } } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += `$${context.parsed.y.toFixed(3)} (${sttModelsForChart[context.dataIndex].unitInput})`;
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    title: { display: true, text: 'STT Pricing (Input Cost)' }
+                }
+            }
+        });
+
+        // TTS Pricing Chart
+        const ttsPricingChartCtx = document.getElementById('ttsPricingChart').getContext('2d');
+        const ttsModelsForChart = pricingData.filter(d => d.category === "TTS" && typeof d.priceInput === 'number');
+        new Chart(ttsPricingChartCtx, {
+            type: 'bar',
+            data: {
+                labels: ttsModelsForChart.map(d => `${d.provider} ${d.model}`),
+                datasets: [
+                    {
+                        label: 'Price (Input Text) - (USD per 1M tokens/chars)',
+                        data: ttsModelsForChart.map(d => d.priceInput),
+                        backgroundColor: ttsModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgba(20, 184, 166, 0.5)' : 'rgba(96, 165, 250, 0.5)'),
+                        borderColor: ttsModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgb(13, 148, 136)' : 'rgb(59, 130, 246)'),
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Price (Output Audio) - (USD per 1M tokens)',
+                        data: ttsModelsForChart.map(d => (typeof d.priceOutput === 'number' ? d.priceOutput : 0)), // Use 0 if N/A
+                        backgroundColor: ttsModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgba(13, 148, 136, 0.8)' : 'rgba(59, 130, 246, 0.8)'),
+                        borderColor: ttsModelsForChart.map(d => d.provider === 'OpenAI' ? 'rgb(13, 148, 136)' : 'rgb(37, 99, 235)'),
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Price (USD)' } } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                let label = context.dataset.label || '';
+                                if (label) { label += ': '; }
+                                if (context.parsed.y !== null) {
+                                    label += `$${context.parsed.y.toFixed(2)}`;
+                                    if (context.datasetIndex === 0) { // Input
+                                        label += ` (${ttsModelsForChart[context.dataIndex].unitInput.split('/')[0].trim()})`;
+                                    } else { // Output
+                                        if (ttsModelsForChart[context.dataIndex].priceOutput !== "N/A") {
+                                            label += ` (per 1M Audio Output Tokens)`;
+                                        } else {
+                                            return `${context.dataset.label}: N/A`;
+                                        }
+                                    }
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    title: { display: true, text: 'TTS Pricing (Input Text & Output Audio Cost)' }
+                }
+            }
+        });
+
+
+        // Data from Table 2: Latency Comparison
+        const latencyData = [
+            { service: "OpenAI gpt-4o-transcribe (STT TTFT)", latency: "300-1380ms", source: "Replicate (short clips)" },
+            { service: "OpenAI Realtime API (Speech-to-Speech)", latency: "~1700ms", source: "WebRTC analysis, Jan 2025" },
+            { service: "OpenAI Realtime API (Text-only response)", latency: "350-800ms", source: "Community report" },
+            { service: "OpenAI Realtime API (Final User Transcript)", latency: "~100-300ms", source: "OpenAI Cookbook (after client VAD)" },
+            { service: "Google Gemini 2.5 Pro (Text TTFT)", latency: "~700ms", source: "Vertex AI (voice adds STT/TTS)" }
+        ];
+        const latencyChartCtx = document.getElementById('latencyChart').getContext('2d');
+        new Chart(latencyChartCtx, {
+            type: 'bar',
+            data: {
+                labels: latencyData.map(d => d.service),
+                datasets: [{
+                    label: 'Reported Latency (ms)',
+                    data: latencyData.map(d => { // Use midpoint for ranges for visualization
+                        const parts = d.latency.replace('~', '').replace('ms', '').split('-');
+                        return parts.length > 1 ? (parseInt(parts[0]) + parseInt(parts[1])) / 2 : parseInt(parts[0]);
+                    }),
+                    backgroundColor: [
+                        'rgba(20, 184, 166, 0.7)', 'rgba(13, 148, 136, 0.7)', 'rgba(15, 118, 110, 0.7)', 'rgba(6, 78, 74, 0.7)',
+                        'rgba(96, 165, 250, 0.7)'
+                    ],
+                    borderColor: [
+                        'rgb(13, 148, 136)', 'rgb(15, 118, 110)', 'rgb(6, 95, 70)', 'rgb(4, 56, 50)',
+                        'rgb(59, 130, 246)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, title: { display: true, text: 'Latency (ms)' } } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const original = latencyData[context.dataIndex];
+                                return `${original.latency} (${original.source})`;
+                            }
+                        }
+                    },
+                    title: { display: true, text: 'Latency Comparison (Selected Metrics)' }
+                }
+            }
+        });
+
+        // Data from Table 3: STT Accuracy Benchmark Summary
+        const sttAccuracyData = [
+            { model: "OpenAI gpt-4o-transcribe", dataset: "FLEURS (English)", wer: 2.46, source: "JarvisLabs AI" },
+            { model: "OpenAI gpt-4o-transcribe", dataset: "FLEURS (English)", wer: 2.93, source: "Community reproduction" },
+            { model: "OpenAI gpt-4o-transcribe", dataset: "VoiceWriter.io Overall", wer: 11.9, source: "VoiceWriter.io" },
+            { model: "OpenAI gpt-4o-mini-transcribe", dataset: "General Estimate", wer: 3.5, source: "JarvisLabs AI" },
+            { model: "OpenAI Whisper Large v3", dataset: "General Estimate", wer: 7.0, source: "JarvisLabs AI" },
+            { model: "Gemini 1.5 Pro", dataset: "VoiceWriter.io Overall", wer: 15.7, source: "VoiceWriter.io" },
+            { model: "Gemini 2.0 Flash", dataset: "VoiceWriter.io Overall", wer: 15.8, source: "VoiceWriter.io" },
+            { model: "Google Cloud STT (Chirp)", dataset: "General Estimate", wer: 7.5, source: "Softcery (5-10% range)" } // Midpoint
+        ];
+        const sttAccuracyChartCtx = document.getElementById('sttAccuracyChart').getContext('2d');
+        new Chart(sttAccuracyChartCtx, {
+            type: 'bar',
+            data: {
+                labels: sttAccuracyData.map(d => `${d.model} (${d.dataset})`),
+                datasets: [{
+                    label: 'Word Error Rate (%) - Lower is Better',
+                    data: sttAccuracyData.map(d => d.wer),
+                    backgroundColor: sttAccuracyData.map(d => d.model.includes('OpenAI') ? 'rgba(20, 184, 166, 0.7)' : 'rgba(96, 165, 250, 0.7)'),
+                    borderColor: sttAccuracyData.map(d => d.model.includes('OpenAI') ? 'rgb(13, 148, 136)' : 'rgb(59, 130, 246)'),
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y', // For better readability of long labels
+                scales: { x: { beginAtZero: true, title: { display: true, text: 'WER (%)' } } },
+                plugins: {
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                const original = sttAccuracyData[context.dataIndex];
+                                return `${original.wer}% (Source: ${original.source})`;
+                            }
+                        }
+                    },
+                    title: { display: true, text: 'STT Word Error Rate (WER) Comparison' }
+                }
+            }
+        });
+
+        // Data for Table 4: Language and Accent Support
+        const languageSupportData = [
+            { category: "STT", provider: "OpenAI", languages: "100+", accentControl: "N/A" },
+            { category: "STT", provider: "Google Gemini API", languages: "Extensive (core model)", accentControl: "N/A" },
+            { category: "STT", provider: "Google Cloud STT", languages: "125+ variants", accentControl: "N/A" },
+            { category: "TTS", provider: "OpenAI", languages: "50+", accentControl: "Prompting (default AmE)" },
+            { category: "TTS", provider: "Google Gemini API", languages: "24+ (auto-detected)", accentControl: "Prompting, BCP-47" },
+            { category: "TTS", provider: "Google Cloud TTS", languages: "Extensive, many regional", accentControl: "Prebuilt voices, SSML" }
+        ];
+        const langTableBody = document.getElementById('languageSupportTable').getElementsByTagName('tbody')[0];
+        languageSupportData.forEach(item => {
+            let row = langTableBody.insertRow();
+            row.insertCell().textContent = item.category;
+            row.insertCell().textContent = item.provider;
+            row.insertCell().textContent = item.languages;
+            row.insertCell().textContent = item.accentControl;
+        });
+
+        // Data for Table 5: Customization Feature Availability
+        const customizationData = [
+            { category: "STT", provider: "OpenAI", feature: "Vocab Adaptation", availability: "Implicit (prompting)", models: "gpt-4o STT" },
+            { category: "STT", provider: "Google Cloud STT", feature: "Model Adaptation", availability: "Yes", models: "Most Cloud STT" },
+            { category: "TTS", provider: "OpenAI", feature: "Prompt-based Style Control", availability: "Yes", models: "gpt-4o-mini-tts" },
+            { category: "TTS", provider: "OpenAI", feature: "Custom Voice Training", availability: "Future Plans/Limited", models: "gpt-4o-mini-tts (future)" },
+            { category: "TTS", provider: "Google Gemini API", feature: "Prompt-based Style Control", availability: "Yes", models: "Gemini Preview TTS" },
+            { category: "TTS", provider: "Google Cloud TTS", feature: "Custom Voice Training", availability: "Yes (Sales)", models: "Cloud TTS" },
+            { category: "TTS", provider: "Google Cloud TTS", feature: "Instant Custom Voice", availability: "Yes (Details limited)", models: "Cloud TTS" },
+            { category: "Model Fine-Tuning", provider: "OpenAI", feature: "Base LLM (Text)", availability: "Yes", models: "GPT-4, GPT-3.5-Turbo" },
+            { category: "Model Fine-Tuning", provider: "Google", feature: "Gemini Text Models", availability: "Yes", models: "Gemini text models" }
+        ];
+        const customTableBody = document.getElementById('customizationTable').getElementsByTagName('tbody')[0];
+        customizationData.forEach(item => {
+            let row = customTableBody.insertRow();
+            row.insertCell().textContent = item.category;
+            row.insertCell().textContent = item.provider;
+            row.insertCell().textContent = item.feature;
+            row.insertCell().textContent = item.availability;
+            row.insertCell().textContent = item.models;
+        });
+
+        // Initialize tooltips for all charts
+        Chart.helpers.each(Chart.instances, function (instance) {
+            createChartTooltip(instance);
+        });
+
+    </script>
+</body>
+
+</html>
